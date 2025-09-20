@@ -11,6 +11,7 @@ Digite o seguinte comando para iniciar um ambiente de desenvolvimento:
 python -m venv venv
 ```
 Acessamos nosso ambiente de desenvolvimento, usando o comando:
+
 No Windows: 
 ```bash
 venv\Scripts\activate
