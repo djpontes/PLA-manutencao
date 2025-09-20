@@ -37,6 +37,7 @@ python app.py
 ```
 
 A aplicação ficará disponível em:
+
 👉 http://127.0.0.1:5000/
 
 Autores: Eduarda Pontes e Julia Lima
