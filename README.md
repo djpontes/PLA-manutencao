@@ -9,7 +9,6 @@ git clone https://github.com/djpontes/PLA-manutencao.git
 ```
 
 ### CRIAR AMBIENTE DEV
-Abra o terminal.
 
 Digite o seguinte comando para iniciar um ambiente de desenvolvimento:
 ```bash
