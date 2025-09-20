@@ -3,6 +3,11 @@ Aplicação para distribuir os técnicos entre as máquinas para que todas as ma
 
 ## COMO RODAR
 
+Clonar o repositório
+```bash
+git clone https://github.com/djpontes/PLA-manutencao.git
+```
+
 ### CRIAR AMBIENTE DEV
 Abra o terminal.
 
@@ -27,8 +32,9 @@ Após a criação do ambiente, vamos instalar as dependências, execute o seguin
 pip install -r requirements.txt
 ```
 
-
-Para sair do ambiente virtual de desenvolvimento:
+Executar a aplicação:
 ```bash
-deactivate
+python app.py
 ```
+
+Autores: Eduarda Pontes e Julia Lima
