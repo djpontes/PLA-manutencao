@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="pt-br">
+<head><meta charset="utf-8"><title>PL - Flask</title></head>
+<body>
+  <h1>Programação Linear</h1>
+  <form method="post">
+    <label>Coef A: <input name="a" type="number" step="any" required></label><br>
+    <label>Coef B: <input name="b" type="number" step="any" required></label><br>
+    <button type="submit">Calcular</button>
+  </form>
+
+  {% if resultado is not none %}
+    <h2>Resultado: {{ resultado }}</h2>
+  {% endif %}
+</body>
+</html>
