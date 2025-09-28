@@ -2,15 +2,23 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/")
 def index():
-    resultado = None
+    return render_template("index.html")
+
+@app.route("/metodos)", methods=["GET", "POST"])
+def metodos():
     if request.method == "POST":
-        a = float(request.form.get("a", 0))
-        b = float(request.form.get("b", 0))
-        # exemplo: calcular Z = a*x + b*y com x=2,y=3 (substitua pela sua lógica)
-        resultado = a*2 + b*3
-    return render_template("index.html", resultado=resultado)
+        pass
+    return render_template("metodos.html")
+
+@app.route("/sobre")
+def sobre():
+    return render_template("sobre.html")
+
+@app.route("/algoritmos")
+def algoritmos():
+    return render_template("algoritmos.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
