@@ -46,6 +46,85 @@ function executarMetodo() {
     }, 1000);
 }
 
+function executarExecucao() {
+    const tipo = document.getElementById("tipo-execucao").value;
+    const tamanhoInput = document.getElementById("op-aleatorio").value;
+ 
+    let tamanho;
+
+    if (tipo === "aleatorio") {
+        if (!tamanhoInput || parseInt(tamanhoInput) < 1) {
+            alert("Por favor, insira um número válido para o tamanho do problema (maior que 0)!");
+            return; // interrompe a execução se inválido
+        } else {
+            tamanho = parseInt(tamanhoInput);
+        }
+    }
+
+
+    fetch("/metodos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tipo, tamanho })
+    })
+    .then(res => res.json())
+    .then(data => {
+        const resultado = document.getElementById("resultado-metodo");
+        resultado.classList.remove("hidden");
+
+        const r = data.resultado_execucao;
+
+        // Tabela Turnos dos técnicos
+        let tabelaTurnos = `<h3>Turnos dos Técnicos</h3><table><tr><th>Técnico</th><th>Turno</th></tr>`;
+        for (const [tec, turno] of Object.entries(r["Turnos dos técnicos"])) {
+            tabelaTurnos += `<tr><td>${tec}</td><td>${turno}</td></tr>`;
+        }
+        tabelaTurnos += "</table>";
+
+        // Tabela Tempo para manutenção
+        let tabelaTempo = `<h3>Tempo para Manutenção</h3><table><tr><th>Técnico</th>`;
+        const maquinas = Object.keys(r["Tempo para manutenção"][Object.keys(r["Tempo para manutenção"])[0]]);
+        maquinas.forEach(m => tabelaTempo += `<th>${m}</th>`);
+        tabelaTempo += `</tr>`;
+        for (const [tec, tempos] of Object.entries(r["Tempo para manutenção"])) {
+            tabelaTempo += `<tr><td>${tec}</td>`;
+            maquinas.forEach(m => tabelaTempo += `<td>${tempos[m] || "-"}</td>`);
+            tabelaTempo += `</tr>`;
+        }
+        tabelaTempo += "</table>";
+
+        // Tabela Turnos Permitidos
+        let tabelaTurnosPermitidos = `<h3>Turnos Permitidos por Máquina</h3><table><tr><th>Máquina</th><th>Turnos Permitidos</th></tr>`;
+        for (const [m, turnos] of Object.entries(r["Turnos permitidos"])) {
+            tabelaTurnosPermitidos += `<tr><td>${m}</td><td>${turnos.join(", ")}</td></tr>`;
+        }
+        tabelaTurnosPermitidos += "</table>";
+
+        // Tabela Solução Inicial
+        let tabelaSolucao = `<h3>Solução Inicial</h3><table><tr><th>Técnico</th><th>Máquinas</th></tr>`;
+        for (const [tec, maquinas] of Object.entries(r["Solução inicial"])) {
+            tabelaSolucao += `<tr><td>${tec}</td><td>${maquinas.join(", ")}</td></tr>`;
+        }
+        tabelaSolucao += "</table>";
+
+        // Tabela Horas Trabalhadas
+        let tabelaCarga = `<h3>Horas Trabalhadas por Técnico</h3><table><tr><th>Técnico</th><th>Horas</th></tr>`;
+        for (const [tec, horas] of Object.entries(r["Horas trabalhadas"])) {
+            tabelaCarga += `<tr><td>${tec}</td><td>${horas}</td></tr>`;
+        }
+        tabelaCarga += "</table>";
+
+        resultado.innerHTML = `
+            ${tabelaTurnos}
+            ${tabelaTempo}
+            ${tabelaTurnosPermitidos}
+            ${tabelaSolucao}
+            ${tabelaCarga}
+            <p><b>Custo da solução inicial:</b> ${r["Custo da solução inicial"]}</p>
+            <p><b>Máquinas não atribuídas:</b> ${r["Máquinas não atribuídas"].join(", ") || "Nenhuma"}</p>
+        `;
+    });
+}
 
 // Função para visualizar a imagem antes de upload
 function previewImage(input, id) {
