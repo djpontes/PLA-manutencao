@@ -12,7 +12,7 @@ git clone https://github.com/djpontes/PLA-manutencao.git
 
 Digite o seguinte comando para iniciar um ambiente de desenvolvimento:
 ```bash
-python -m venv venv
+python3 -m venv venv
 ```
 Acessamos nosso ambiente de desenvolvimento, usando o comando:
 
