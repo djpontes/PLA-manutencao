@@ -21,23 +21,38 @@ turnos_permitidos = {
     "M10": ["manhã", "noite"]
 }
 
-#Funções para gerar solução inicial
+
+def ajustar_tempo_por_turno(tecnicos, turnos_tecnicos, tempo, turnos_permitidos):
+    tempo_ajustado = {}
+    for t in tecnicos:
+        tempo_ajustado[t] = {}
+        for m in tempo[t]:
+            if turnos_tecnicos[t] in turnos_permitidos[m]:
+                tempo_ajustado[t][m] = tempo[t][m]
+            else:
+                tempo_ajustado[t][m] = "-"  
+    return tempo_ajustado
+
 def gerar_problema(tipo="fixo", num_maquinas=5):
     if tipo == "fixo":
-        return tecnicos, turnos_tecnicos, tempo, turnos_permitidos, limite_horas
+        tempo_final = ajustar_tempo_por_turno(tecnicos, turnos_tecnicos, tempo, turnos_permitidos)
+        return tecnicos, turnos_tecnicos, tempo_final, turnos_permitidos, limite_horas
     else:
-        # mantem a qntd de tecnicos fixa
+        # mantem a quantidade de técnicos fixa
         tec = tecnicos
         turnos = ["manhã", "tarde", "noite"]
 
-        # Gera maquinas aleatorias
+        # Gera máquinas aleatórias
         maquinas = [f"M{i+1}" for i in range(num_maquinas)]
 
         turnos_tecnicos_random = {t: random.choice(turnos) for t in tec}
         tempo_random = {t: {m: random.randint(1, 5) for m in maquinas} for t in tec}
         turnos_permitidos_random = {m: random.sample(turnos, k=random.randint(1, 3)) for m in maquinas}
 
-        return tec, turnos_tecnicos_random, tempo_random, turnos_permitidos_random, limite_horas
+        tempo_final = ajustar_tempo_por_turno(tec, turnos_tecnicos_random, tempo_random, turnos_permitidos_random)
+
+        return tec, turnos_tecnicos_random, tempo_final, turnos_permitidos_random, limite_horas
+
 
 # Atribui tarefas aos técnicos respeitando os turnos e limites de horas    
 def gerar_solucao_inicial(tecnicos, turnos_tecnicos, tempo, turnos_permitidos, limite_horas):
