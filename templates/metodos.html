@@ -11,7 +11,7 @@
     <div id="metodos" class="content hidden">
             <h2>Métodos Básicos</h2>
             
-            <form method="post">
+            <form method="post" onsubmit="return false">
 
                 <div class="form-group">
                     <label for="tipo-execucao">Tipo de execução:</label>
@@ -39,7 +39,7 @@
                 
 
                 <button type="button" class="btn-solucao" name="btn-solucao" onclick="executarExecucao()">Solução inicial</button>
-                <button class="btn-executar" onclick="executarMetodo()">Executar</button>
+                <button type="button"class="btn-executar" onclick="executarMetodo()">Executar</button>
                 
                 <div id="resultado-metodo" class="resultado hidden">
                 # Em desenvolvimento
