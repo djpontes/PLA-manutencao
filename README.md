@@ -1,37 +1,47 @@
 # Otimização da Distribuição de Manutentores em Manutenção Corretiva
 Aplicação para distribuir os técnicos entre as máquinas para que todas as manutenções corretivas sejam concluídas no menor tempo total possível
 
-## COMO RODAR
+## 🚀 COMO RODAR O PROJETO
+No terminal (VSCode ou do seu computador):
 
-Clonar o repositório
+### 1. Escolha um local para clonar o repositorio, por exemplo:
+```bash
+cd Downloads
+```
+### 2. Clone o repositório:
 ```bash
 git clone https://github.com/djpontes/PLA-manutencao.git
 ```
+### 3.Entre na pasta do projeto: 
+```bash
+cd PLA-manutencao
+```
 
-### CRIAR AMBIENTE DEV
+## ⚙️ CRIANDO O AMBIENTE DEV
 
-Digite o seguinte comando para iniciar um ambiente de desenvolvimento:
+### 1. Crie o ambiente virtual:
 ```bash
 python3 -m venv venv
 ```
-Acessamos nosso ambiente de desenvolvimento, usando o comando:
+### 2. Ative o ambiente virtual:
 
-No Windows: 
+🔹 No Windows: 
 ```bash
 venv\Scripts\activate
 ```
 
-No Linux/Mac:
+🔹 No Linux/Mac:
 ```bash
 source venv/bin/activate
 ```
 
-Após a criação do ambiente, vamos instalar as dependências, execute o seguinte comando:
+### 3. Atualize o pip e instale as dependências:
 ```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Executar a aplicação:
+## ▶️ Executando a aplicação:
 ```bash
 python app.py
 ```
@@ -40,4 +50,4 @@ A aplicação ficará disponível em:
 
 👉 http://127.0.0.1:5000/
 
-Autores: Eduarda Pontes e Julia Lima
+👩‍💻 Autores: Eduarda Pontes e Julia Lima
