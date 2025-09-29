@@ -317,6 +317,24 @@
             font-family: monospace; 
         }
 
+        .scroll-table {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .scroll-table table {
+            border-collapse: collapse;
+            min-width: 600px; /* força scroll se muitas colunas */
+            width: 100%;
+        }
+
+        .scroll-table th, .scroll-table td {
+            padding: 5px 10px;
+            text-align: center;
+            border: 1px solid #ccc;
+        }
+
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }

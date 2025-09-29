@@ -82,16 +82,21 @@ function executarExecucao() {
         tabelaTurnos += "</table>";
 
         // Tabela Tempo para manutenção
-        let tabelaTempo = `<h3>Tempo para Manutenção</h3><table><tr><th>Técnico</th>`;
-        const maquinas = Object.keys(r["Tempo para manutenção"][Object.keys(r["Tempo para manutenção"])[0]]);
-        maquinas.forEach(m => tabelaTempo += `<th>${m}</th>`);
+        let todas_maquinas = new Set();
+        for (const tempos of Object.values(r["Tempo para manutenção"])) {
+            Object.keys(tempos).forEach(m => todas_maquinas.add(m));
+        }
+        todas_maquinas = Array.from(todas_maquinas).sort();
+
+        let tabelaTempo = `<h3>Tempo para Manutenção</h3><div class="scroll-table"><table><tr><th>Técnico</th>`;
+        todas_maquinas.forEach(m => tabelaTempo += `<th>${m}</th>`);
         tabelaTempo += `</tr>`;
         for (const [tec, tempos] of Object.entries(r["Tempo para manutenção"])) {
             tabelaTempo += `<tr><td>${tec}</td>`;
-            maquinas.forEach(m => tabelaTempo += `<td>${tempos[m] || "-"}</td>`);
+            todas_maquinas.forEach(m => tabelaTempo += `<td>${tempos[m] !== undefined ? tempos[m] : "-"}</td>`);
             tabelaTempo += `</tr>`;
         }
-        tabelaTempo += "</table>";
+        tabelaTempo += "</table></div>";
 
         // Tabela Turnos Permitidos
         let tabelaTurnosPermitidos = `<h3>Turnos Permitidos por Máquina</h3><table><tr><th>Máquina</th><th>Turnos Permitidos</th></tr>`;
