@@ -1,16 +1,41 @@
-<!doctype html>
-<html lang="pt-br">
-<head><meta charset="utf-8"><title>PL - Flask</title></head>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algoritmos de Otimização</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
 <body>
-  <h1>Programação Linear</h1>
-  <form method="post">
-    <label>Coef A: <input name="a" type="number" step="any" required></label><br>
-    <label>Coef B: <input name="b" type="number" step="any" required></label><br>
-    <button type="submit">Calcular</button>
-  </form>
+    <!-- Inicio -->
+    <div class="container">
+        <header>
+            <h1>Otimização da Distribuição de Manutentores em Manutenção Corretiva</h1>
+            <p>Selecione um método para resolver problemas de otimização</p>
+        </header>
 
-  {% if resultado is not none %}
-    <h2>Resultado: {{ resultado }}</h2>
-  {% endif %}
+        <div class="menu"> 
+            <button href="#" class="menu-btn active" onclick="showContent('principal')">Principal</button> 
+            <button href="#" class="menu-btn" onclick="showContent('metodos')">Métodos Básicos</button> 
+            <button href="#" class="menu-btn" onclick="showContent('algoritmos-geneticos')">Algoritmos Genéticos</button>
+            <button href="#" class="menu-btn" onclick="showContent('sobre')">Sobre</button> 
+        </div>
+        
+        
+        <div id="principal" class="content">
+            <h2>Bem-vindo ao Sistema de Otimização</h2>
+            <p>Este sistema oferece diferentes métodos para resolver problemas de otimização.</p>
+            <p>Selecione uma das opções no menu acima para começar.</p>
+        </div>
+            
+
+    {% include 'metodos.html' %}
+    {% include 'sobre.html' %}
+    {% include 'algoritmos.html' %}
+
+
+ <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
 </body>
 </html>

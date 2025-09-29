@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algoritmos de Otimização</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <div id="sobre" class="content hidden">
+            <div class="sobre-content">
+                <h2>Sobre o Projeto</h2>
+                <p>Em ambientes industriais, a ocorrência de falhas em máquinas é inevitável e impacta diretamente a continuidade da produção. Nesse contexto, a manutenção corretiva torna-se essencial para restabelecer o funcionamento dos equipamentos e reduzir perdas de produtividade. <br>
+
+                    O objetivo é distribuir os técnicos entre as máquinas para que todas as manutenções corretivas sejam concluídas no menor tempo total possível, respeitando: <br>
+                    
+                    Limite máximo de horas de trabalho por técnico (8 h); <br>
+                    
+                    Períodos permitidos de desligamento de cada máquina (manhã, tarde ou noite); <br>
+                    
+                    Um técnico pode atender várias máquinas no mesmo turno, somando o tempo, mas sem ultrapassar o limite de horas e sem realizar manutenção em duas máquinas ao mesmo tempo; <br>
+                    
+                    Cada técnico possui um tempo específico para reparar cada máquina.</p>
+                
+                <h3>Desenvolvido por:</h3>
+                <div class="dev-info">
+                    <div class="dev-card">
+                        <div class="dev-image" id="image-preview-1">
+                            <img src="static/images/duda.jpeg" alt="Foto de Eduarda Pontes">
+                        </div>
+                        <h3>Eduarda Pontes</h3>
+                        <p>Análise e Desenvolvimento de Sistemas</p>
+                    </div>                                    
+                    <div class="dev-card">
+                        <div class="dev-image" id="image-preview-1">
+                            <img src="static/images/julia.jpeg" alt="Foto de Eduarda Pontes">
+                        </div>
+                        <h3>Júlia Lima</h3>
+                        <p>Análise e Desenvolvimento de Sistemas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

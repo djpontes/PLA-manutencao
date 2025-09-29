@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algoritmos de Otimização</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <div id="metodos" class="content hidden">
+            <h2>Métodos Básicos</h2>
+            
+            <form method="post">
+
+                <div class="form-group">
+                    <label for="tipo-execucao">Tipo de execução:</label>
+                    <select id="tipo-execucao" name="tipo-execucao">
+                        <option value="fixo">Fixo</option>
+                        <option value="aleatorio">Aleatório</option>
+                    </select>
+                </div>
+
+                <div class="form-group hidden" id="opcao-aleatorio"> 
+                    <label for="op-aleatorio">Tamanho do problema:</label> 
+                    <input type="number" name="num_maquinas" id="op-aleatorio"> 
+                </div>
+
+                
+                <div class="form-group">
+                    <label for="metodo">Método:</label>
+                    <select id="metodo">
+                        <option value="" disabled selected>Escolha um método</option>
+                        <option value="subida">Subida de Encosta</option>
+                        <option value="subida-tentativas">Subida de Encosta com Tentativas</option>
+                        <option value="tempera">Têmpera Simulada</option>
+                    </select>
+                </div>
+                
+
+                <button type="button" class="btn-solucao" name="btn-solucao" onclick="executarExecucao()">Solução inicial</button>
+                <button class="btn-executar" onclick="executarMetodo()">Executar</button>
+                
+                <div id="resultado-metodo" class="resultado hidden">
+                # Em desenvolvimento
+                </div>
+
+            </form>
+        </div>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
