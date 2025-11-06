@@ -6,18 +6,18 @@ turnos_tecnicos = {"T1": "manhã", "T2": "manhã", "T3": "tarde", "T4": "tarde",
 limite_horas = {t: 8 for t in tecnicos} 
 
 tempo = {
-    "T1": {"M1": 3, "M2": 2, "M3": 4, "M10": 2},
-    "T2": {"M1": 4, "M2": 3, "M3": 3, "M10": 3},
-    "T3": {"M3": 3, "M4": 3, "M5": 2, "M6": 3, "M9": 3},
-    "T4": {"M3": 2, "M4": 4, "M5": 3, "M6": 3, "M9": 3},
-    "T5": {"M6": 5, "M7": 4, "M8": 3, "M9": 2, "M10": 3},
-    "T6": {"M6": 4, "M7": 3, "M8": 2, "M9": 3, "M10": 2}
+    "T1": {"M01": 3, "M02": 2, "M03": 4, "M10": 2},
+    "T2": {"M01": 4, "M02": 3, "M03": 3, "M10": 3},
+    "T3": {"M03": 3, "M04": 3, "M05": 2, "M06": 3, "M09": 3},
+    "T4": {"M03": 2, "M04": 4, "M05": 3, "M06": 3, "M09": 3},
+    "T5": {"M06": 5, "M07": 4, "M08": 3, "M09": 2, "M10": 3},
+    "T6": {"M06": 4, "M07": 3, "M08": 2, "M09": 3, "M10": 2}
 }
 
 turnos_permitidos = {
-    "M1": ["manhã"], "M2": ["manhã"], "M3": ["manhã", "tarde"],
-    "M4": ["tarde"], "M5": ["tarde"], "M6": ["tarde", "noite"],
-    "M7": ["noite"], "M8": ["noite"], "M9": ["tarde", "noite"],
+    "M01": ["manhã"], "M02": ["manhã"], "M03": ["manhã", "tarde"],
+    "M04": ["tarde"], "M05": ["tarde"], "M06": ["tarde", "noite"],
+    "M07": ["noite"], "M08": ["noite"], "M09": ["tarde", "noite"],
     "M10": ["manhã", "noite"]
 }
 
@@ -43,7 +43,7 @@ def gerar_problema(tipo="fixo", num_maquinas=5):
         turnos = ["manhã", "tarde", "noite"]
 
         # Gera máquinas aleatórias
-        maquinas = [f"M{i+1}" for i in range(num_maquinas)]
+        maquinas = [f"M{i+1:02}" for i in range(num_maquinas)]
 
         turnos_tecnicos_random = {t: random.choice(turnos) for t in tec}
         tempo_random = {t: {m: random.randint(1, 5) for m in maquinas} for t in tec}
