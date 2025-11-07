@@ -149,7 +149,7 @@ function previewImage(input, id) {
     }
 }
 
-// Mostrar label aleatorio quando for escolhido o metodo 'Aleatorio'
+// Mostrar label aleatorio quando for escolhido o metodo aleatorio
 document.getElementById('tipo-execucao').addEventListener('change', function() {
     const opcao = document.getElementById('opcao-aleatorio');
     if (this.value === 'aleatorio') {
@@ -158,6 +158,37 @@ document.getElementById('tipo-execucao').addEventListener('change', function() {
         opcao.classList.add("hidden")
     }
 });
+
+// Exibir os campos adicionais conforme o método escolhido
+document.getElementById('metodo').addEventListener('change', function () {
+    const metodo = this.value;
+
+    const camposContainer = document.getElementById('campos-metodo');
+    const subidaTentativas = document.getElementById('campos-subida-tentativas');
+    const tempera = document.getElementById('campos-tempera');
+
+    camposContainer.classList.add('hidden');
+    subidaTentativas.classList.add('hidden');
+    tempera.classList.add('hidden');
+
+    if (metodo === 'subida-tentativas') {
+        camposContainer.classList.remove('hidden');
+        subidaTentativas.classList.remove('hidden');
+    } else if (metodo === 'tempera') {
+        camposContainer.classList.remove('hidden');
+        tempera.classList.remove('hidden');
+    }
+});
+
+// Função para o botão análise dos métodos
+function analisarMetodos() {
+    const resultado = document.getElementById("resultado-metodo");
+    resultado.classList.remove("hidden");
+    resultado.innerHTML = `
+        <h3>Análise dos métodos</h3>
+        <p>Comparativo de desempenho e parâmetros em desenvolvimento.</p>
+    `;
+}
 
 // Melhorar a experiência em dispositivos móveis
 document.addEventListener('DOMContentLoaded', function() {
@@ -180,3 +211,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
