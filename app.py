@@ -1,21 +1,22 @@
 from flask import Flask, render_template, request, jsonify
 from funcoes import gerar_problema, gerar_solucao_inicial, avalia
+from subida_encosta import subida_encosta, avalia_solucao
+from subida_encosta_tentativa import subida_encosta_tentativas
+from tempera_simulada import tempera_simulada
+
 
 app = Flask(__name__)
+
+# -------------------------
+# ROTAS
+# -------------------------
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-from flask import Flask, render_template, request, jsonify
-from funcoes import gerar_problema, gerar_solucao_inicial, avalia
 
-app = Flask(__name__)
-
-@app.route("/")
-def index():
-    return render_template("index.html")
-
+# ROTA PARA GERAR DADOS E SOLUÇÃO INICIAL
 @app.route("/metodos", methods=["GET", "POST"])
 def metodos():
     if request.method == "POST":
@@ -27,15 +28,19 @@ def metodos():
         tec, turnos_tecnicos, tempo, turnos_permitidos, limite_horas = gerar_problema(tipo, tamanho)
 
         # 2. Gerar solução inicial
-        solucao, horas_trabalhadas = gerar_solucao_inicial(tec, turnos_tecnicos, tempo, turnos_permitidos, limite_horas)
+        solucao, horas_trabalhadas = gerar_solucao_inicial(
+            tec, turnos_tecnicos, tempo, turnos_permitidos, limite_horas
+        )
 
         # 3. Avaliar solução
         custo = avalia(solucao, tempo)
 
-        # 4. Lista de máquinas não atribuídas
-        maquinas_nao_atribuidas = [m for m in turnos_permitidos.keys() if all(m not in maquinas for maquinas in solucao.values())]
+        # 4. Máquinas não atribuídas
+        maquinas_nao_atribuidas = [
+            m for m in turnos_permitidos.keys()
+            if all(m not in maquinas for maquinas in solucao.values())
+        ]
 
-        # 5. Monta o resultado como dicionário (para tabela)
         resultado_execucao = {
             "Técnicos": tec,
             "Turnos dos técnicos": turnos_tecnicos,
@@ -47,18 +52,88 @@ def metodos():
             "Custo da solução inicial": custo,
             "Máquinas não atribuídas": maquinas_nao_atribuidas
         }
+       
 
         return jsonify({"resultado_execucao": resultado_execucao})
 
     return render_template("metodos.html")
 
-@app.route("/sobre")
-def sobre():
-    return render_template("sobre.html")
 
-@app.route("/algoritmos")
-def algoritmos():
-    return render_template("algoritmos.html")
+@app.route("/executar_metodo", methods=["POST"])
+def executar_metodo():
+    data = request.get_json()
+
+    metodo = data.get("metodo")
+    solucao_inicial = data["solucao_inicial"]
+    tempo = data["tempo"]
+    limite_horas = data["limite_horas"]
+
+    # SUBIDA DE ENCOSTA NORMAL
+    # dentro de executar_metodo, bloco if metodo == "subida":
+    if metodo == "subida":
+        # se o cliente enviou custo_inicial, use; caso contrário, calcule aqui
+        custo_inicial = data.get("custo_inicial")
+        try:
+            custo_inicial = float(custo_inicial) if custo_inicial is not None else None
+        except Exception:
+            custo_inicial = None
+
+        solucao_final, custo_final = subida_encosta(solucao_inicial, tempo, limite_horas)
+
+        if custo_inicial is None:
+            custo_inicial = avalia_solucao(solucao_inicial, tempo)
+
+        # cálculo do ganho corrigido
+        if custo_inicial is not None and custo_inicial != 0:
+            ganho = (100.0 * abs(custo_inicial - custo_final)) / custo_inicial
+        else:
+            ganho = None
+
+
+        return jsonify({
+            "solucao_inicial": solucao_inicial,
+            "solucao_final": solucao_final,
+            "custo_inicial": custo_inicial,
+            "custo_final": custo_final,
+            "ganho": ganho
+        })
+
+
+    # SUBIDA DE ENCOSTA COM TENTATIVAS
+    elif metodo == "subida-tentativas":
+        num_tentativas = int(data.get("num_tentativas", 10))
+
+        resultado = subida_encosta_tentativas(
+            solucao_inicial,
+            tempo,
+            limite_horas,
+            num_tentativas
+        )
+
+        return jsonify(resultado)
+
+    # TÊMPERA SIMULADA
+    elif metodo == "tempera":
+        temp_inicial = float(data.get("temp_inicial"))
+        temp_final = float(data.get("temp_final"))
+        fator_redutor = float(data.get("fator_redutor"))
+
+        solucao_final, custo_final = tempera_simulada(
+            solucao_inicial,
+            tempo,
+            limite_horas,
+            temp_inicial,
+            temp_final,
+            fator_redutor
+        )
+
+        return jsonify({
+            "solucao_final": solucao_final,
+            "custo_final": custo_final
+        })
+
+    # MÉTODO INVÁLIDO
+    return jsonify({"erro": "Método inválido"}), 400
 
 if __name__ == "__main__":
     app.run(debug=True)

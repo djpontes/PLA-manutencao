@@ -35,8 +35,8 @@ def ajustar_tempo_por_turno(tecnicos, turnos_tecnicos, tempo, turnos_permitidos)
 
 def gerar_problema(tipo="fixo", num_maquinas=5):
     if tipo == "fixo":
-        tempo_final = ajustar_tempo_por_turno(tecnicos, turnos_tecnicos, tempo, turnos_permitidos)
-        return tecnicos, turnos_tecnicos, tempo_final, turnos_permitidos, limite_horas
+        return tecnicos, turnos_tecnicos, tempo, turnos_permitidos, limite_horas
+
     else:
         # mantem a quantidade de técnicos fixa
         tec = tecnicos
@@ -76,6 +76,8 @@ def gerar_solucao_inicial(tecnicos, turnos_tecnicos, tempo, turnos_permitidos, l
             horas_trabalhadas[melhor_tecnico] += melhor_tempo
         else:
             print(f"Nenhum técnico disponível para a máquina {m}")
+    
+    print("SOLUCAO INICIAL:", solucao)
 
     return solucao, horas_trabalhadas
 

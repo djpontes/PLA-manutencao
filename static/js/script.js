@@ -1,3 +1,7 @@
+// global para guardar o último resultado vindo de /metodos
+window.ultimoResultadoExecucao = null;
+
+
 // Função para alternar entre os conteúdos
 function showContent(id) {
     let contents = document.querySelectorAll(".content");
@@ -26,25 +30,115 @@ function showContent(id) {
 }
 
 
-// Função para executar o método selecionado
-function executarMetodo() {
+async function executarMetodo() {
     const metodo = document.getElementById("metodo").value;
     if (!metodo) {
         alert("Por favor, escolha um método válido!");
         return;
     }
 
-    const resultado = document.getElementById("resultado-metodo");
-    resultado.classList.remove("hidden");
-    resultado.innerHTML = "<h3>Processando...</h3>";
+    const resultadoDiv = document.getElementById("resultado-metodo");
+    resultadoDiv.classList.remove("hidden");
+    resultadoDiv.innerHTML = "<h3>Processando método...</h3>";
 
-    setTimeout(() => {
-        resultado.innerHTML = `
-            <h3>Resultado:</h3>
-            <p>Módulo em desenvolvimento</p>
+    const r = window.ultimoResultadoExecucao;
+    if (!r) {
+        alert("Primeiro gere a solução inicial.");
+        resultadoDiv.classList.add("hidden");
+        return;
+    }
+
+    try {
+        let payload = {
+            metodo: metodo,
+            solucao_inicial: r["Solução inicial"],
+            tempo: r["Tempo para manutenção"],
+            limite_horas: r["Limite de horas"],
+            custo_inicial: r["Custo da solução inicial"]
+        };
+
+        // --------------------------
+        // SUBIDA COM TENTATIVAS
+        // --------------------------
+        if (metodo === "subida-tentativas") {
+            payload["num_tentativas"] = parseInt(document.getElementById("num-tentativas").value);
+        }
+
+        // --------------------------
+        // TÊMPERA SIMULADA
+        // --------------------------
+        if (metodo === "tempera") {
+            payload["temp_inicial"] = parseFloat(document.getElementById("temp-inicial").value);
+            payload["temp_final"] = parseFloat(document.getElementById("temp-final").value);
+            payload["fator_redutor"] = parseFloat(document.getElementById("fator-redutor").value);
+        }
+
+
+        const resp = await fetch("/executar_metodo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+
+
+        const custoInicial = Number(r["Custo da solução inicial"]);
+        const custoFinal = Number(data.custo_final);
+
+        const ganho = custoInicial === 0
+            ? "N/A"
+            : ((100 * Math.abs(custoInicial - custoFinal)) / custoInicial).toFixed(2) + " %";
+
+        const nomeMetodo = metodo === "tempera"
+            ? "Têmpera Simulada"
+            : metodo === "subida" 
+                ? "Subida de Encosta"
+                : "Subida de Encosta com Tentativas";
+
+        resultadoDiv.innerHTML = `
+            <h3>Resultado do método: ${nomeMetodo}</h3>
+
+            <h4>Solução inicial (custo = ${custoInicial}):</h4>
+            ${montarTabela(r["Solução inicial"])}
+
+            <h4>Solução final (custo = ${custoFinal}):</h4>
+            ${montarTabela(data.solucao_final)}
+
+            <p><strong>Ganho:</strong> ${ganho}</p>
         `;
-    }, 1000);
+    } catch (err) {
+        console.error(err);
+        resultadoDiv.innerHTML = "<p>Por favor, preencha todos os campos</p>";
+    }
 }
+
+function montarTabela(solucao) { 
+    let html = `
+        <table border="1" cellpadding="6" style="border-collapse: collapse; margin-bottom: 20px;">
+            <tr style="background:#eee;">
+                <th>Técnico</th>
+                <th>Máquinas</th>
+            </tr>
+    `;
+
+    for (const tecnico in solucao) { 
+        const maquinas = solucao[tecnico]; 
+        
+        html += `
+            <tr>
+                <td><strong>${tecnico}</strong></td>
+                <td>${maquinas.length > 0 ? maquinas.join(", ") : ""}</td>
+            </tr>
+        `;
+    } 
+    
+    html += `</table>`; 
+    
+    return html; 
+}
+
+
 
 function executarExecucao() {
     const tipo = document.getElementById("tipo-execucao").value;
@@ -73,6 +167,8 @@ function executarExecucao() {
         resultado.classList.remove("hidden");
 
         const r = data.resultado_execucao;
+
+        window.ultimoResultadoExecucao = r; // guarda o resultado para usar depois
 
         // Tabela Turnos dos técnicos
         let tabelaTurnos = `<h3>Turnos dos Técnicos</h3><table><tr><th>Técnico</th><th>Turno</th></tr>`;
@@ -129,7 +225,10 @@ function executarExecucao() {
             <p><b>Máquinas não atribuídas:</b> ${r["Máquinas não atribuídas"].join(", ") || "Nenhuma"}</p>
         `;
     });
+
+    
 }
+
 
 // Função para visualizar a imagem antes de upload
 function previewImage(input, id) {
@@ -186,7 +285,7 @@ function analisarMetodos() {
     resultado.classList.remove("hidden");
     resultado.innerHTML = `
         <h3>Análise dos métodos</h3>
-        <p>Comparativo de desempenho e parâmetros em desenvolvimento.</p>
+        <p>Em desenvolvimento.</p>
     `;
 }
 
