@@ -3,18 +3,32 @@ from funcoes import gerar_problema, gerar_solucao_inicial, avalia
 from subida_encosta import subida_encosta, avalia_solucao
 from subida_encosta_tentativa import subida_encosta_tentativas
 from tempera_simulada import tempera_simulada
+from analise_metodos import analisar_metodos
 
 
 app = Flask(__name__)
-
-# -------------------------
-# ROTAS
-# -------------------------
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+@app.route("/analise", methods=["POST"])
+def analise():
+    dados = request.json
+
+    solucao_inicial = dados["solucao_inicial"]
+    tempo = dados["tempo"]
+    limite_horas = dados["limite_horas"]
+
+    num_tentativas = dados.get("num_tentativas", 10)
+    temp_ini = dados.get("temp_ini", 50)
+    temp_fim = dados.get("temp_fim", 1)
+    fator = dados.get("fator", 0.95)
+
+    resultados = analisar_metodos(solucao_inicial, tempo, limite_horas,
+                                  num_tentativas, temp_ini, temp_fim, fator)
+
+    return jsonify({"resultados": resultados})
 
 # ROTA PARA GERAR DADOS E SOLUÇÃO INICIAL
 @app.route("/metodos", methods=["GET", "POST"])
@@ -69,9 +83,7 @@ def executar_metodo():
     limite_horas = data["limite_horas"]
 
     # SUBIDA DE ENCOSTA NORMAL
-    # dentro de executar_metodo, bloco if metodo == "subida":
     if metodo == "subida":
-        # se o cliente enviou custo_inicial, use; caso contrário, calcule aqui
         custo_inicial = data.get("custo_inicial")
         try:
             custo_inicial = float(custo_inicial) if custo_inicial is not None else None
@@ -83,7 +95,6 @@ def executar_metodo():
         if custo_inicial is None:
             custo_inicial = avalia_solucao(solucao_inicial, tempo)
 
-        # cálculo do ganho corrigido
         if custo_inicial is not None and custo_inicial != 0:
             ganho = (100.0 * abs(custo_inicial - custo_final)) / custo_inicial
         else:

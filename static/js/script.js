@@ -138,8 +138,6 @@ function montarTabela(solucao) {
     return html; 
 }
 
-
-
 function executarExecucao() {
     const tipo = document.getElementById("tipo-execucao").value;
     const tamanhoInput = document.getElementById("op-aleatorio").value;
@@ -149,12 +147,11 @@ function executarExecucao() {
     if (tipo === "aleatorio") {
         if (!tamanhoInput || parseInt(tamanhoInput) < 1) {
             alert("Por favor, insira um número válido para o tamanho do problema (maior que 0)!");
-            return; // interrompe a execução se inválido
+            return;
         } else {
             tamanho = parseInt(tamanhoInput);
         }
     }
-
 
     fetch("/metodos", {
         method: "POST",
@@ -168,7 +165,14 @@ function executarExecucao() {
 
         const r = data.resultado_execucao;
 
-        window.ultimoResultadoExecucao = r; // guarda o resultado para usar depois
+        // 🔥 IMPORTANTE: Salvar TODOS os dados da execução para análise posterior
+        window.ultimoResultadoExecucao = {
+            ...r,
+            tipo,
+            tamanho
+        };
+
+        console.log("🔥 Execução salva para análise:", window.ultimoResultadoExecucao);
 
         // Tabela Turnos dos técnicos
         let tabelaTurnos = `<h3>Turnos dos Técnicos</h3><table><tr><th>Técnico</th><th>Turno</th></tr>`;
@@ -194,21 +198,21 @@ function executarExecucao() {
         }
         tabelaTempo += "</table></div>";
 
-        // Tabela Turnos Permitidos
+        // Turnos Permitidos
         let tabelaTurnosPermitidos = `<h3>Turnos Permitidos por Máquina</h3><table><tr><th>Máquina</th><th>Turnos Permitidos</th></tr>`;
         for (const [m, turnos] of Object.entries(r["Turnos permitidos"])) {
             tabelaTurnosPermitidos += `<tr><td>${m}</td><td>${turnos.join(", ")}</td></tr>`;
         }
         tabelaTurnosPermitidos += "</table>";
 
-        // Tabela Solução Inicial
+        // Solução Inicial
         let tabelaSolucao = `<h3>Solução Inicial</h3><table><tr><th>Técnico</th><th>Máquinas</th></tr>`;
         for (const [tec, maquinas] of Object.entries(r["Solução inicial"])) {
             tabelaSolucao += `<tr><td>${tec}</td><td>${maquinas.join(", ")}</td></tr>`;
         }
         tabelaSolucao += "</table>";
 
-        // Tabela Horas Trabalhadas
+        // Horas Trabalhadas
         let tabelaCarga = `<h3>Horas Trabalhadas por Técnico</h3><table><tr><th>Técnico</th><th>Horas</th></tr>`;
         for (const [tec, horas] of Object.entries(r["Horas trabalhadas"])) {
             tabelaCarga += `<tr><td>${tec}</td><td>${horas}</td></tr>`;
@@ -225,10 +229,7 @@ function executarExecucao() {
             <p><b>Máquinas não atribuídas:</b> ${r["Máquinas não atribuídas"].join(", ") || "Nenhuma"}</p>
         `;
     });
-
-    
 }
-
 
 // Função para visualizar a imagem antes de upload
 function previewImage(input, id) {
@@ -280,13 +281,64 @@ document.getElementById('metodo').addEventListener('change', function () {
 });
 
 // Função para o botão análise dos métodos
-function analisarMetodos() {
-    const resultado = document.getElementById("resultado-metodo");
-    resultado.classList.remove("hidden");
-    resultado.innerHTML = `
-        <h3>Análise dos métodos</h3>
-        <p>Em desenvolvimento.</p>
+async function analisarMetodos() {
+    if (!window.ultimoResultadoExecucao) {
+        alert("Primeiro gere a solução inicial!");
+        return;
+    }
+
+    const dados = {
+        solucao_inicial: window.ultimoResultadoExecucao["Solução inicial"],
+        tempo: window.ultimoResultadoExecucao["Tempo para manutenção"],
+        limite_horas: window.ultimoResultadoExecucao["Limite de horas"],
+        num_tentativas: document.getElementById("num-tentativas")?.value || 10,
+        temp_ini: document.getElementById("temp-inicial")?.value || 50,
+        temp_fim: document.getElementById("temp-final")?.value || 1,
+        fator: document.getElementById("fator-redutor")?.value || 0.95
+    };
+
+    const resposta = await fetch("/analise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados)
+    });
+
+    const resultado = await resposta.json();
+    
+    mostrarTabelaAnalise(resultado.resultados);
+}
+
+function mostrarTabelaAnalise(resultados) {
+    let div = document.getElementById("resultado-metodo");
+    div.classList.remove("hidden");
+
+    let tabela = `
+    <h3>Resultado da Análise dos Métodos</h3>
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Método</th>
+            <th>Solução Inicial</th>
+            <th>Solução Final</th>
+            <th>Ganho (%)</th>
+            <th>Tempo Execução</th>
+        </tr>
     `;
+
+    resultados.forEach(r => {
+        tabela += `
+        <tr>
+            <td>${r["Método"]}</td>
+            <td>${r["Solução Inicial"]}</td>
+            <td>${r["Solução Final"]}</td>
+            <td>${r["Ganho (%)"]}</td>
+            <td>${r["Tempo Execução"]}</td>
+        </tr>
+        `;
+    });
+
+    tabela += "</table>";
+
+    div.innerHTML = tabela;
 }
 
 // Melhorar a experiência em dispositivos móveis

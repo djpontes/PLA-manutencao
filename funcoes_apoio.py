@@ -75,6 +75,6 @@ def avalia_solucao(solucao, tempo):
             if isinstance(val, (int, float)):
                 custo += val
             else:
-                # penalidade alta para impossibilidade
+                # penalidade alta 
                 custo += 1e6
     return custo
