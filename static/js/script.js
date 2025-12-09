@@ -363,3 +363,64 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+document.getElementById("btn-executar-ag").addEventListener("click", async () => {
+    if (!window.ultimoResultadoExecucao) {
+        alert("Primeiro gere a solução inicial!");
+        return;
+    }
+
+    let payload = {
+    solucao_inicial: window.ultimoResultadoExecucao["Solução inicial"],
+    tempo: window.ultimoResultadoExecucao["Tempo para manutenção"],
+    turnos_tecnicos: window.ultimoResultadoExecucao["Turnos dos técnicos"],
+    turnos_permitidos: window.ultimoResultadoExecucao["Turnos permitidos"],
+    limite_horas: window.ultimoResultadoExecucao["Limite de horas"],
+    tam_pop: parseInt(document.getElementById("tam-pop").value),
+    num_geracoes: parseInt(document.getElementById("num-geracoes").value),
+    taxa_cross: parseFloat(document.getElementById("taxa-crossover").value),
+    taxa_mut: parseFloat(document.getElementById("taxa-mutacao").value)
+};
+
+
+    try {
+        const resp = await fetch("/executar_ag", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const dados = await resp.json();
+
+        document.getElementById("resultado-ag").classList.remove("hidden");
+        document.getElementById("resultado-ag").innerHTML = `
+            <h3>Resultado AG</h3>
+            <p><strong>Custo final:</strong> ${dados.custo_final}</p>
+            ${montarTabela(dados.solucao_final)}
+        `;
+    } catch (err) {
+        console.error(err);
+        alert("Ocorreu um erro ao executar o AG.");
+    }
+});
+
+// Função para montar tabela de solução (técnico x máquinas)
+function montarTabela(solucao) { 
+    let html = `
+        <table border="1" cellpadding="6" style="border-collapse: collapse; margin-bottom: 20px;">
+            <tr style="background:#eee;">
+                <th>Técnico</th>
+                <th>Máquinas</th>
+            </tr>
+    `;
+    for (const tecnico in solucao) { 
+        const maquinas = solucao[tecnico]; 
+        html += `
+            <tr>
+                <td><strong>${tecnico}</strong></td>
+                <td>${maquinas.length > 0 ? maquinas.join(", ") : ""}</td>
+            </tr>
+        `;
+    } 
+    html += "</table>"; 
+    return html; 
+}

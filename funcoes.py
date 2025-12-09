@@ -83,7 +83,15 @@ def gerar_solucao_inicial(tecnicos, turnos_tecnicos, tempo, turnos_permitidos, l
 
 def avalia(solucao, tempo):
     custo_total = 0
+    penalidade = 1e6  # valor alto para penalizar soluções inválidas
+
     for t, maquinas in solucao.items():
         for m in maquinas:
-            custo_total += tempo[t][m]
+            val = tempo.get(t, {}).get(m)
+            if isinstance(val, (int, float)):
+                custo_total += val
+            else:
+                # penaliza se o técnico não pode executar a máquina
+                custo_total += penalidade
+
     return custo_total

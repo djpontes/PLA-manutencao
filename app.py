@@ -4,13 +4,42 @@ from subida_encosta import subida_encosta, avalia_solucao
 from subida_encosta_tentativa import subida_encosta_tentativas
 from tempera_simulada import tempera_simulada
 from analise_metodos import analisar_metodos
-
+from algoritmo_genetico import algoritmo_genetico
 
 app = Flask(__name__)
 
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/executar_ag", methods=["POST"])
+def executar_ag():
+    data = request.get_json()
+
+    solucao_inicial = data["solucao_inicial"]
+    tempo = data["tempo"]
+
+    tam_pop = int(data["tam_pop"])
+    num_geracoes = int(data["num_geracoes"])
+    taxa_cross = float(data["taxa_cross"])
+    taxa_mut = float(data["taxa_mut"])
+
+    solucao_final, custo_final = algoritmo_genetico(
+    solucao_inicial,
+    tempo,
+    data["turnos_tecnicos"],
+    data["turnos_permitidos"],
+    data["limite_horas"],
+    tam_pop,
+    num_geracoes,
+    taxa_cross,
+    taxa_mut
+)
+
+    return jsonify({
+        "solucao_final": solucao_final,
+        "custo_final": custo_final
+    })
 
 @app.route("/analise", methods=["POST"])
 def analise():
