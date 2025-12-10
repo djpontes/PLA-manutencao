@@ -1,130 +1,205 @@
 import random
 from copy import deepcopy
-from funcoes import avalia
 
-# ---------------------------------------------------------
-# GERA POPULAÇÃO INICIAL
-# ---------------------------------------------------------
-def gerar_populacao_inicial(n, solucao_inicial):
+PENALTY = 10**6
+
+def gerar_populacao_inicial(tam_pop, tecnicos, maquinas, turnos_tecnicos,
+                            turnos_permitidos, tempo, limite_horas):
     populacao = []
-    for _ in range(n):
-        novo = deepcopy(solucao_inicial)
+    for _ in range(tam_pop):
+        individuo = {t: [] for t in tecnicos}
 
-        # Embaralha máquinas entre os técnicos
-        maquinas = []
-        for mlist in novo.values():
-            maquinas.extend(mlist)
+        # embaralha máquinas para variar indivíduos
+        m_shuffled = maquinas[:]
+        random.shuffle(m_shuffled)
 
-        random.shuffle(maquinas)
+        for m in m_shuffled:
+            
+            elegiveis = [t for t in tecnicos if turnos_tecnicos.get(t) in turnos_permitidos.get(m, [])]
+            if not elegiveis:
+               
+                elegiveis = tecnicos[:]
+            escolha = random.choice(elegiveis)
+            individuo[escolha].append(m)
 
-        # Redistribui
-        i = 0
-        for t in novo.keys():
-            qtd = len(novo[t])
-            novo[t] = maquinas[i:i+qtd]
-            i += qtd
-
-        populacao.append(novo)
+        populacao.append(individuo)
     return populacao
 
 
-# ---------------------------------------------------------
-# AVALIA aptidão (fitness)
-# ---------------------------------------------------------
-def fitness(solucao, tempo, *args, **kwargs):
-    return avalia(solucao, tempo)
+def avalia_solucao(solucao, tempo, turnos_tecnicos, turnos_permitidos, limite_horas):
+    custo_total = 0.0
+    horas = {t: 0.0 for t in solucao}
+
+    for t, maquinas in solucao.items():
+        for m in maquinas:
+            # verifica se técnico tem tempo declarado para a máquina
+            val = tempo.get(t, {}).get(m)
+            if val is None:
+                # pode ser que exista tempo para outro técnico mas não para este
+                custo_total += PENALTY
+                continue
+
+            # verifica turno permitido
+            if turnos_tecnicos.get(t) not in turnos_permitidos.get(m, []):
+                custo_total += PENALTY
+                horas[t] += val
+                continue
+
+            
+            custo_total += val
+            horas[t] += val
+
+    
+    for t, h in horas.items():
+        if h > limite_horas.get(t, float('inf')):
+            custo_total += PENALTY * (h - limite_horas.get(t, 0))
+
+    return custo_total, horas
 
 
+def fitness(solucao, tempo, turnos_tecnicos, turnos_permitidos, limite_horas):
+    custo, _ = avalia_solucao(solucao, tempo, turnos_tecnicos, turnos_permitidos, limite_horas)
+    return custo
 
-# ---------------------------------------------------------
-# SELEÇÃO (roleta)
-# ---------------------------------------------------------
-def selecao(populacao, tempo, turnos_tecnicos, turnos_permitidos, limite_horas):
+
+def selecao_roleta(populacao, tempo, turnos_tecnicos, turnos_permitidos, limite_horas):
+
     custos = [fitness(ind, tempo, turnos_tecnicos, turnos_permitidos, limite_horas) for ind in populacao]
-    total = sum(1/(c+1) for c in custos)
-
-    pick = random.uniform(0, total)
-    atual = 0
-
-    for ind, c in zip(populacao, custos):
-        atual += 1/(c+1)
+    # transforma em aptidão: apt = 1/(1+custo)
+    apt = [1.0 / (1.0 + c) for c in custos]
+    soma = sum(apt)
+    if soma == 0:
+        return deepcopy(random.choice(populacao))
+    pick = random.uniform(0, soma)
+    atual = 0.0
+    for ind, a in zip(populacao, apt):
+        atual += a
         if atual >= pick:
             return deepcopy(ind)
-
     return deepcopy(populacao[-1])
 
-# ---------------------------------------------------------
-# CROSSOVER
-# ---------------------------------------------------------
-def crossover(pai, mae, taxa):
-    if random.random() > taxa:
+
+def crossover_maquina(pai, mae, tecnicos, maquinas, taxa_cross):
+
+    if random.random() > taxa_cross:
         return deepcopy(pai), deepcopy(mae)
 
-    filho1 = deepcopy(pai)
-    filho2 = deepcopy(mae)
+    filho1 = {t: [] for t in tecnicos}
+    filho2 = {t: [] for t in tecnicos}
 
-    tecnicos = list(pai.keys())
-    corte = random.randint(1, len(tecnicos)-1)
+    for m in maquinas:
+        
+        t_pai = next((t for t, lst in pai.items() if m in lst), None)
+        t_mae = next((t for t, lst in mae.items() if m in lst), None)
 
-    for t in tecnicos[:corte]:
-        filho1[t], filho2[t] = filho2[t], filho1[t]
+     
+        if random.random() < 0.5:
+            origem = t_pai
+        else:
+            origem = t_mae
+    
+        if origem is None:
+            origem = random.choice(tecnicos)
+        filho1[origem].append(m)
+
+        if random.random() < 0.5:
+            origem2 = t_mae
+        else:
+            origem2 = t_pai
+        if origem2 is None:
+            origem2 = random.choice(tecnicos)
+        filho2[origem2].append(m)
 
     return filho1, filho2
 
 
-# ---------------------------------------------------------
-# MUTAÇÃO
-# ---------------------------------------------------------
-def mutacao(individuo, taxa):
-    if random.random() > taxa:
+def mutacao_reatribuicao(individuo, tecnicos, maquinas, turnos_tecnicos, turnos_permitidos, taxa_mut):
+  
+    if random.random() > taxa_mut:
         return individuo
 
-    tecnicos = list(individuo.keys())
-
-    t1, t2 = random.sample(tecnicos, 2)
-
-    if len(individuo[t1]) == 0:
+ 
+    all_m = [m for lst in individuo.values() for m in lst]
+    if not all_m:
         return individuo
 
-    m = random.choice(individuo[t1])
-    individuo[t1].remove(m)
-    individuo[t2].append(m)
+    m = random.choice(all_m)
+
+    
+    t_atual = next((t for t, lst in individuo.items() if m in lst), None)
+    if t_atual:
+        individuo[t_atual].remove(m)
+
+    elegiveis = [t for t in tecnicos if turnos_tecnicos.get(t) in turnos_permitidos.get(m, [])]
+    if not elegiveis:
+        elegiveis = tecnicos[:]
+
+    t_novo = random.choice(elegiveis)
+    individuo[t_novo].append(m)
+
+    # chance de trocar outra máquina entre técnicos
+    if random.random() < 0.3:
+        t1, t2 = random.sample(tecnicos, 2)
+        if individuo[t1] and individuo[t2]:
+            m1 = random.choice(individuo[t1])
+            m2 = random.choice(individuo[t2])
+            individuo[t1].remove(m1); individuo[t2].remove(m2)
+            individuo[t1].append(m2); individuo[t2].append(m1)
 
     return individuo
 
 
-# ---------------------------------------------------------
-# ALGORITMO GENÉTICO PRINCIPAL
-# ---------------------------------------------------------
-def algoritmo_genetico(solucao_inicial, tempo, turnos_tecnicos, turnos_permitidos, limite_horas, tam_pop, num_geracoes, taxa_cross, taxa_mut):
-    populacao = gerar_populacao_inicial(tam_pop, solucao_inicial)
+def algoritmo_genetico(solucao_inicial, tempo, turnos_tecnicos, turnos_permitidos,limite_horas, tam_pop, num_geracoes, taxa_cross, taxa_mut,tecnicos=None, elitismo=0.1):
+
+    if tecnicos is None:
+        tecnicos = list(solucao_inicial.keys())
+
+ 
+    maquinas = sorted(list(turnos_permitidos.keys()))
+
+    populacao = gerar_populacao_inicial(tam_pop, tecnicos, maquinas, turnos_tecnicos,
+                                        turnos_permitidos, tempo, limite_horas)
 
     melhor_global = None
     melhor_custo = float("inf")
 
+
+    n_elite = max(1, int(elitismo * tam_pop))
+
     for g in range(num_geracoes):
-        nova_populacao = []
+        avaliacoes = [(ind, fitness(ind, tempo, turnos_tecnicos, turnos_permitidos, limite_horas)) for ind in populacao]
+        avaliacoes.sort(key=lambda x: x[1])  # menor custo primeiro
 
-        while len(nova_populacao) < tam_pop:
-            pai = selecao(populacao, tempo, turnos_tecnicos, turnos_permitidos, limite_horas)
-            mae = selecao(populacao, tempo, turnos_tecnicos, turnos_permitidos, limite_horas)
+        
+        if avaliacoes[0][1] < melhor_custo:
+            melhor_custo = avaliacoes[0][1]
+            melhor_global = deepcopy(avaliacoes[0][0])
 
-            filho1, filho2 = crossover(pai, mae, taxa_cross)
+      
+        novos = [deepcopy(avaliacoes[i][0]) for i in range(n_elite)]
 
-            filho1 = mutacao(filho1, taxa_mut)
-            filho2 = mutacao(filho2, taxa_mut)
+  
+        while len(novos) < tam_pop:
+            pai = selecao_roleta(populacao, tempo, turnos_tecnicos, turnos_permitidos, limite_horas)
+            mae = selecao_roleta(populacao, tempo, turnos_tecnicos, turnos_permitidos, limite_horas)
 
-            nova_populacao.append(filho1)
-            if len(nova_populacao) < tam_pop:
-                nova_populacao.append(filho2)
+            filho1, filho2 = crossover_maquina(pai, mae, tecnicos, maquinas, taxa_cross)
 
-        populacao = nova_populacao
+            filho1 = mutacao_reatribuicao(filho1, tecnicos, maquinas, turnos_tecnicos, turnos_permitidos, taxa_mut)
+            filho2 = mutacao_reatribuicao(filho2, tecnicos, maquinas, turnos_tecnicos, turnos_permitidos, taxa_mut)
 
-        # Melhor da geração
-        for ind in populacao:
-            c = fitness(ind, tempo, turnos_tecnicos, turnos_permitidos, limite_horas)
-            if c < melhor_custo:
-                melhor_custo = c
-                melhor_global = deepcopy(ind)
+            novos.append(filho1)
+            if len(novos) < tam_pop:
+                novos.append(filho2)
 
-    return melhor_global, melhor_custo
+        populacao = novos
+
+    melhor_custo_final, _ = None, None
+    if melhor_global is not None:
+        melhor_custo_final, _ = avalia_solucao(melhor_global, tempo, turnos_tecnicos, turnos_permitidos, limite_horas)
+    else:
+
+        melhor_global = deepcopy(populacao[0])
+        melhor_custo_final, _ = avalia_solucao(melhor_global, tempo, turnos_tecnicos, turnos_permitidos, limite_horas)
+
+    return melhor_global, melhor_custo_final

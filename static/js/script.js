@@ -1,6 +1,4 @@
-// global para guardar o último resultado vindo de /metodos
 window.ultimoResultadoExecucao = null;
-
 
 // Função para alternar entre os conteúdos
 function showContent(id) {

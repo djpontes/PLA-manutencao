@@ -14,13 +14,13 @@
             <!-- Tamanho da população -->
             <div class="form-group">
                 <label for="tam-pop">Tamanho da população:</label>
-                <input type="number" id="tam-pop" name="tam-pop" min="1" required>
+                <input type="number" id="tam-pop" name="tam-pop" min="1"step="1" required>
             </div>
 
             <!-- Número de gerações -->
             <div class="form-group">
                 <label for="num-geracoes">Número de gerações:</label>
-                <input type="number" id="num-geracoes" name="num-geracoes" min="1" required>
+                <input type="number" id="num-geracoes" name="num-geracoes" min="1" step="1" required>
             </div>
 
             <!-- Taxa de crossover -->
@@ -35,10 +35,10 @@
                 <input type="number" id="taxa-mutacao" name="taxa-mutacao" step="any" min="0" max="1" required>
             </div>
 
-            <!-- Geração inicial -->
+            <!-- Intervalo de Geração -->
             <div class="form-group">
-                <label for="geracao-inicial">Geração inicial</label>
-                <input type="number" id="geracao-inicial" name="geracao-inicial" step="any" min="0" max="1" required>
+                <label for="intervalo_geracao">Intervalo de Geração</label>
+                <input type="number" id="intervalo_geracao" name="intervalo_geracao" step="any" min="0" max="1" required>
             </div>
 
             <button type="button" class="btn-executar" id="btn-executar-ag">Executar AG</button>

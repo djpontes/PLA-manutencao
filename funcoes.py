@@ -38,20 +38,24 @@ def gerar_problema(tipo="fixo", num_maquinas=5):
         return tecnicos, turnos_tecnicos, tempo, turnos_permitidos, limite_horas
 
     else:
-        # mantem a quantidade de técnicos fixa
         tec = tecnicos
         turnos = ["manhã", "tarde", "noite"]
 
-        # Gera máquinas aleatórias
         maquinas = [f"M{i+1:02}" for i in range(num_maquinas)]
 
-        turnos_tecnicos_random = {t: random.choice(turnos) for t in tec}
         tempo_random = {t: {m: random.randint(1, 5) for m in maquinas} for t in tec}
-        turnos_permitidos_random = {m: random.sample(turnos, k=random.randint(1, 3)) for m in maquinas}
+        turnos_permitidos_random = {
+            m: random.sample(turnos, k=random.randint(1, 3)) for m in maquinas
+        }
 
-        tempo_final = ajustar_tempo_por_turno(tec, turnos_tecnicos_random, tempo_random, turnos_permitidos_random)
+        tempo_final = ajustar_tempo_por_turno(
+            tec,
+            turnos_tecnicos,
+            tempo_random,
+            turnos_permitidos_random
+        )
 
-        return tec, turnos_tecnicos_random, tempo_final, turnos_permitidos_random, limite_horas
+        return tec, turnos_tecnicos, tempo_final, turnos_permitidos_random, limite_horas
 
 
 # Atribui tarefas aos técnicos respeitando os turnos e limites de horas    
@@ -59,14 +63,17 @@ def gerar_solucao_inicial(tecnicos, turnos_tecnicos, tempo, turnos_permitidos, l
     solucao = {t: [] for t in tecnicos}
     horas_trabalhadas = {t: 0 for t in tecnicos}
 
-    for m in turnos_permitidos.keys():
+    maquinas = list(turnos_permitidos.keys())
+
+    for m in maquinas:
         melhor_tecnico = None
         melhor_tempo = float('inf')
 
         for t in tecnicos:
-            if m in tempo.get(t, {}) and turnos_tecnicos[t] in turnos_permitidos[m]:
+            # só considera técnico se ele tem tempo informado e turno compatível
+            if m in tempo.get(t, {}) and turnos_tecnicos.get(t) in turnos_permitidos.get(m, []):
                 horas = tempo[t][m]
-                if horas_trabalhadas[t] + horas <= limite_horas[t]:
+                if horas_trabalhadas[t] + horas <= limite_horas.get(t, float('inf')):
                     if horas < melhor_tempo:
                         melhor_tempo = horas
                         melhor_tecnico = t
@@ -75,23 +82,31 @@ def gerar_solucao_inicial(tecnicos, turnos_tecnicos, tempo, turnos_permitidos, l
             solucao[melhor_tecnico].append(m)
             horas_trabalhadas[melhor_tecnico] += melhor_tempo
         else:
-            print(f"Nenhum técnico disponível para a máquina {m}")
-    
-    print("SOLUCAO INICIAL:", solucao)
+            # nenhum técnico elegível dentro do limite, escolhe qualquer elegível
+            candidatos = [t for t in tecnicos if turnos_tecnicos.get(t) in turnos_permitidos.get(m, []) and m in tempo.get(t, {})]
+            if candidatos:
+                escolha = min(candidatos, key=lambda x: tempo[x][m])
+                solucao[escolha].append(m)
+                horas_trabalhadas[escolha] += tempo[escolha][m]
+            else:
+                # penalixar dps
+                t_rand = random.choice(tecnicos)
+                solucao[t_rand].append(m)
 
+
+    print("SOLUCAO INICIAL (gerada):", solucao)
     return solucao, horas_trabalhadas
+
+# Avalia solução
+PENALTY = 10**6
 
 def avalia(solucao, tempo):
     custo_total = 0
-    penalidade = 1e6  # valor alto para penalizar soluções inválidas
-
     for t, maquinas in solucao.items():
         for m in maquinas:
             val = tempo.get(t, {}).get(m)
             if isinstance(val, (int, float)):
                 custo_total += val
             else:
-                # penaliza se o técnico não pode executar a máquina
-                custo_total += penalidade
-
+                custo_total += PENALTY
     return custo_total
