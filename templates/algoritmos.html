@@ -41,10 +41,16 @@
                 <input type="number" id="intervalo_geracao" name="intervalo_geracao" step="any" min="0" max="1" required>
             </div>
 
-            <button type="button" class="btn-executar" id="btn-executar-ag">Executar AG</button>
+            <button type="button" class="btn-executar" onclick="executarAG()">Executar AG</button>
         </form>
 
         <div id="resultado-ag" class="resultado hidden"></div>
+        <input type="hidden" id="solucaoInicialInput">
+        <input type="hidden" id="tempoInput">
+        <input type="hidden" id="custoInicial">
+
+        <div id="resultadoAG"></div>
+
     </div>
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>

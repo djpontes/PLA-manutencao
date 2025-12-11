@@ -4,7 +4,7 @@ from subida_encosta import subida_encosta, avalia_solucao
 from subida_encosta_tentativa import subida_encosta_tentativas
 from tempera_simulada import tempera_simulada
 from analise_metodos import analisar_metodos
-from algoritmo_genetico import algoritmo_genetico
+from algoritmo_genetico import *
 
 app = Flask(__name__)
 
@@ -15,31 +15,64 @@ def index():
 @app.route("/executar_ag", methods=["POST"])
 def executar_ag():
     data = request.get_json()
+    print("=== RECEBIDO NO /executar_ag ===")
+    print(data)
 
-    solucao_inicial = data["solucao_inicial"]
-    tempo = data["tempo"]
+    solucao_inicial = data.get("solucao_inicial")
+    tempo = data.get("tempo")
+    turnos_tecnicos = data.get("turnos_tecnicos")
+    turnos_permitidos = data.get("turnos_permitidos")
+    limite_horas = data.get("limite_horas")
 
-    tam_pop = int(data["tam_pop"])
-    num_geracoes = int(data["num_geracoes"])
-    taxa_cross = float(data["taxa_cross"])
-    taxa_mut = float(data["taxa_mut"])
+    # aceitar tanto 'tamanho_pop' quanto 'tam_pop' (frontend já usou 'tamanho_pop')
+    tam_pop = int(data.get("tamanho_pop", data.get("tam_pop", 10)))
+    num_geracoes = int(data.get("num_geracoes", 20))
+    taxa_cross = float(data.get("taxa_cross", 0.8))
+    taxa_mut = float(data.get("taxa_mut", 0.1))
 
-    solucao_final, custo_final = algoritmo_genetico(
-    solucao_inicial,
-    tempo,
-    data["turnos_tecnicos"],
-    data["turnos_permitidos"],
-    data["limite_horas"],
-    tam_pop,
-    num_geracoes,
-    taxa_cross,
-    taxa_mut
-)
+    # validações básicas (evitam crashes)
+    if solucao_inicial is None or tempo is None or turnos_tecnicos is None or turnos_permitidos is None:
+        return jsonify({"erro": "Dados incompletos. Execute primeiro /metodos para gerar os dados."}), 400
+
+    # executar o algoritmo genético
+    melhor_solucao, melhor_custo = algoritmo_genetico(
+        solucao_inicial,
+        tempo,
+        turnos_tecnicos,
+        turnos_permitidos,
+        limite_horas,
+        tam_pop,
+        num_geracoes,
+        taxa_cross,
+        taxa_mut
+    )
+
+    # calcular custo da solução inicial (usa 'avalia' importada de funcoes)
+    try:
+        custo_inicial = avalia(solucao_inicial, tempo)
+    except Exception:
+        # fallback se avalia tiver assinatura diferente
+        custo_inicial = None
+
+    # ganho absoluto e percentual (se possível)
+    ganho_abs = None
+    ganho_pct = None
+    if custo_inicial is not None:
+        ganho_abs = custo_inicial - melhor_custo
+        if custo_inicial != 0:
+            ganho_pct = (100.0 * ganho_abs) / custo_inicial
 
     return jsonify({
-        "solucao_final": solucao_final,
-        "custo_final": custo_final
+        "solucao_inicial": solucao_inicial,
+        "custo_inicial": custo_inicial,
+        "solucao_final": melhor_solucao,
+        "custo_final": melhor_custo,
+        "ganho_abs": ganho_abs,
+        "ganho_pct": ganho_pct
     })
+
+
+
 
 @app.route("/analise", methods=["POST"])
 def analise():

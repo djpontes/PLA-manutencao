@@ -361,24 +361,66 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-document.getElementById("btn-executar-ag").addEventListener("click", async () => {
-    if (!window.ultimoResultadoExecucao) {
-        alert("Primeiro gere a solução inicial!");
+async function executarAG() {
+    const dados = window.ultimoResultadoExecucao;
+
+    if (!dados) {
+        alert("Execute primeiro o método inicial para gerar os dados.");
         return;
     }
 
-    let payload = {
-    solucao_inicial: window.ultimoResultadoExecucao["Solução inicial"],
-    tempo: window.ultimoResultadoExecucao["Tempo para manutenção"],
-    turnos_tecnicos: window.ultimoResultadoExecucao["Turnos dos técnicos"],
-    turnos_permitidos: window.ultimoResultadoExecucao["Turnos permitidos"],
-    limite_horas: window.ultimoResultadoExecucao["Limite de horas"],
-    tam_pop: parseInt(document.getElementById("tam-pop").value),
-    num_geracoes: parseInt(document.getElementById("num-geracoes").value),
-    taxa_cross: parseFloat(document.getElementById("taxa-crossover").value),
-    taxa_mut: parseFloat(document.getElementById("taxa-mutacao").value)
-};
+    // Valores do formulário (strings inicialmente)
+    const tamPopStr = document.getElementById("tam-pop").value;
+    const numGeracoesStr = document.getElementById("num-geracoes").value;
+    const taxaCrossStr = document.getElementById("taxa-crossover").value;
+    const taxaMutStr = document.getElementById("taxa-mutacao").value;
+    const intervaloGeracaoStr = document.getElementById("intervalo_geracao").value;
 
+    // Validação básica
+    if (
+        tamPopStr.trim() === "" ||
+        numGeracoesStr.trim() === "" ||
+        taxaCrossStr.trim() === "" ||
+        taxaMutStr.trim() === "" ||
+        intervaloGeracaoStr.trim() === ""
+    ) {
+        alert("Preencha todos os campos!");
+        return;
+    }
+
+    // Conversão segura para números
+    const tamPop = parseInt(tamPopStr, 10);
+    const numGeracoes = parseInt(numGeracoesStr, 10);
+    const taxaCross = parseFloat(taxaCrossStr);
+    const taxaMut = parseFloat(taxaMutStr);
+    const intervaloGeracao = parseFloat(intervaloGeracaoStr);
+
+    if (isNaN(tamPop) || tamPop < 1) { alert("Tamanho da população inválido"); return; }
+    if (isNaN(numGeracoes) || numGeracoes < 1) { alert("Número de gerações inválido"); return; }
+    if (isNaN(taxaCross) || taxaCross <= 0 || taxaCross >= 1) { alert("Taxa de crossover inválida (0 < x < 1)"); return; }
+    if (isNaN(taxaMut) || taxaMut <= 0 || taxaMut >= 1) { alert("Taxa de mutação inválida (0 < x < 1)"); return; }
+    if (isNaN(intervaloGeracao) || intervaloGeracao < 0 || intervaloGeracao > 1) {
+        // mantenha a checagem que você deseja; aqui apenas aviso
+        console.warn("Intervalo de geração fora do intervalo 0-1 (verifique se é o esperado).");
+    }
+
+    // Monta payload — envia os dados gerados por /metodos + parâmetros numéricos
+    const payload = {
+        solucao_inicial: dados["Solução inicial"],
+        tempo: dados["Tempo para manutenção"],
+        turnos_tecnicos: dados["Turnos dos técnicos"],
+        turnos_permitidos: dados["Turnos permitidos"],
+        limite_horas: dados["Limite de horas"],
+
+        // parâmetros numéricos (envia com nomes aceitos pelo backend)
+        tamanho_pop: tamPop,
+        num_geracoes: numGeracoes,
+        taxa_cross: taxaCross,
+        taxa_mut: taxaMut,
+        intervalo_geracao: intervaloGeracao
+    };
+
+    console.log("🔵 Enviando /executar_ag payload:", payload);
 
     try {
         const resp = await fetch("/executar_ag", {
@@ -387,38 +429,57 @@ document.getElementById("btn-executar-ag").addEventListener("click", async () =>
             body: JSON.stringify(payload)
         });
 
-        const dados = await resp.json();
+        if (!resp.ok) {
+            const text = await resp.text();
+            console.error("Resposta não-ok de /executar_ag:", resp.status, text);
+            alert("Erro do servidor ao executar AG. Veja console.");
+            return;
+        }
 
+        const resultado = await resp.json();
+        console.log("🟢 Resposta do AG:", resultado);
+
+        // Detectar chaves possíveis com fallback
+        const solInicial = resultado.solucao_inicial || resultado.solucao || payload.solucao_inicial || {};
+        const custoInicial = resultado.custo_inicial ?? resultado.custo_inicial ?? resultado.custo_inicial; // keep undefined if not present
+        const solFinal = resultado.solucao_final || resultado.melhor_solucao || resultado.solucao_final || {};
+        const custoFinal = resultado.custo_final || resultado.custo_final || resultado.custo_final;
+        let ganhoAbs = null;
+let ganhoPct = null;
+
+if (custoInicial != null && custoFinal != null) {
+    const bruto = custoInicial - custoFinal;
+
+    // Se o ganho for negativo, vira 0
+    ganhoAbs = bruto > 0 ? bruto : 0;
+
+    // Percentual só existe se o custo inicial for diferente de zero
+    if (custoInicial !== 0) {
+        const pctBruto = (100 * bruto) / custoInicial;
+        ganhoPct = pctBruto > 0 ? pctBruto : 0;
+    } else {
+        ganhoPct = 0;
+    }
+} else {
+    ganhoAbs = "N/A";
+    ganhoPct = "N/A";
+}
+        // Exibir resultado com montarTabela
         document.getElementById("resultado-ag").classList.remove("hidden");
         document.getElementById("resultado-ag").innerHTML = `
-            <h3>Resultado AG</h3>
-            <p><strong>Custo final:</strong> ${dados.custo_final}</p>
-            ${montarTabela(dados.solucao_final)}
+            <h3>Resultado do Algoritmo Genético</h3>
+
+            <h4>Solução inicial (custo = ${custoInicial !== undefined ? custoInicial : "N/A"})</h4>
+            ${montarTabela(solInicial)}
+
+            <h4>Solução final (custo = ${custoFinal !== undefined ? custoFinal : "N/A"})</h4>
+            ${montarTabela(solFinal)}
+
+            <p><strong>Ganho absoluto:</strong> ${ganhoAbs !== null && ganhoAbs !== undefined ? ganhoAbs : "N/A"}</p>
+            <p><strong>Ganho percentual:</strong> ${ganhoPct !== null && ganhoPct !== undefined ? (Number(ganhoPct).toFixed(2) + " %") : "N/A"}</p>
         `;
     } catch (err) {
-        console.error(err);
-        alert("Ocorreu um erro ao executar o AG.");
+        console.error("Erro ao chamar /executar_ag:", err);
+        alert("Erro ao executar AG. Veja o console do navegador.");
     }
-});
-
-// Função para montar tabela de solução (técnico x máquinas)
-function montarTabela(solucao) { 
-    let html = `
-        <table border="1" cellpadding="6" style="border-collapse: collapse; margin-bottom: 20px;">
-            <tr style="background:#eee;">
-                <th>Técnico</th>
-                <th>Máquinas</th>
-            </tr>
-    `;
-    for (const tecnico in solucao) { 
-        const maquinas = solucao[tecnico]; 
-        html += `
-            <tr>
-                <td><strong>${tecnico}</strong></td>
-                <td>${maquinas.length > 0 ? maquinas.join(", ") : ""}</td>
-            </tr>
-        `;
-    } 
-    html += "</table>"; 
-    return html; 
 }

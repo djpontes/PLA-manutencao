@@ -30,7 +30,7 @@ def ajustar_tempo_por_turno(tecnicos, turnos_tecnicos, tempo, turnos_permitidos)
             if turnos_tecnicos[t] in turnos_permitidos[m]:
                 tempo_ajustado[t][m] = tempo[t][m]
             else:
-                tempo_ajustado[t][m] = "-"  
+                tempo_ajustado[t][m] = None  
     return tempo_ajustado
 
 def gerar_problema(tipo="fixo", num_maquinas=5):
